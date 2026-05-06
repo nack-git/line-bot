@@ -1,17 +1,60 @@
 const express = require("express");
-const app = express();
+const axios = require("axios");
 
+const app = express();
 app.use(express.json());
 
-app.post("/webhook", (req, res) => {
+// 🔑 ใส่ Channel Access Token ของคุณ
+const LINE_TOKEN = "2e4fd4435dc609c7002ff3f22d30291e";
+
+// 📲 ฟังก์ชันยิงข้อความเข้า LINE
+async function sendLine(userId, message) {
+    await axios.post(
+        "https://api.line.me/v2/bot/message/push",
+        {
+            to: userId,
+            messages: [
+                {
+                    type: "text",
+                    text: message
+                }
+            ]
+        },
+        {
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + LINE_TOKEN
+            }
+        }
+    );
+}
+
+// 🔥 webhook รับ event จาก LINE
+app.post("/webhook", async (req, res) => {
     console.log("LINE EVENT:");
     console.log(JSON.stringify(req.body, null, 2));
+
+    const events = req.body.events;
+
+    if (events && events.length > 0) {
+        const event = events[0];
+
+        if (event.source && event.source.userId) {
+            const userId = event.source.userId;
+
+            // 💬 ส่งข้อความกลับ
+            await sendLine(userId, "✅ มีออเดอร์เข้าแล้ว!");
+        }
+    }
+
     res.sendStatus(200);
 });
 
+// 🧪 test server
 app.get("/", (req, res) => {
     res.send("Server running");
 });
 
+// 🚀 run server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("Server started"));
