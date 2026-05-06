@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 
 // 🔑 ใส่ Channel Access Token ของคุณ
-const LINE_TOKEN = "2e4fd4435dc609c7002ff3f22d30291e";
+const LINE_TOKEN = "p17PUfG/xDUVD/ieH7o7m+HioOr9vZr6Ooha4ggpXaeI4LMCWzX7fRRNmW88LfKm+As3i7aWdGUoDJ5dU0NA3b/8X02VP7HOFCqRFOtthvCXjuT8A9nuHaBTFnI4HryDD98vtEc42c1/T3Ipxgt6EAdB04t89/1O/w1cDnyilFU=";
 
 // 📲 ฟังก์ชันยิงข้อความเข้า LINE
 async function sendLine(userId, message) {
