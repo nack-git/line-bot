@@ -5,11 +5,12 @@ const axios = require("axios");
 
 const app = express();
 app.use(express.json());
+app.use(express.static("public"));
 
-// 🔑 ใช้จาก Environment Variable
+// 🔑 Token จาก ENV
 const LINE_TOKEN = process.env.LINE_TOKEN;
 
-// 📤 ฟังก์ชันส่งข้อความเข้า LINE
+// 📤 ส่งเข้า LINE
 async function sendLine(userId, message) {
     try {
         await axios.post(
@@ -31,29 +32,42 @@ async function sendLine(userId, message) {
             }
         );
 
-        console.log("✅ SEND SUCCESS");
+        console.log("✅ SEND OK");
     } catch (err) {
-        console.log("❌ SEND ERROR:", err.response?.data || err.message);
+        console.log("❌ ERROR:", err.response?.data || err.message);
     }
 }
 
-// 🔥 Webhook หลัก
+// 🔥 รับ order จากเว็บ
+app.post("/order", async (req, res) => {
+    const { item, qty } = req.body;
+
+    const orderText = `🍽 ออเดอร์ใหม่\nรายการ: ${item} x ${qty}`;
+
+    console.log("ORDER:", orderText);
+
+    // ยิงเข้า LINE (admin)
+    const adminUserId = process.env.ADMIN_USER_ID;
+
+    await sendLine(adminUserId, orderText);
+
+    res.json({ success: true });
+});
+
+// 🔥 webhook (รับ user chat)
 app.post("/webhook", async (req, res) => {
     const events = req.body.events;
 
     if (Array.isArray(events)) {
         for (const event of events) {
 
-            if (event.type === "message" && event.source?.userId) {
+            if (event.type === "message") {
                 const userId = event.source.userId;
                 const text = event.message.text;
 
-                console.log("📩 LINE EVENT:", text);
+                console.log("CHAT:", text);
 
-                await sendLine(
-                    userId,
-                    "🛒 มีออเดอร์เข้า\nรายการ: " + text
-                );
+                await sendLine(userId, "📩 คุณส่งมา: " + text);
             }
         }
     }
@@ -61,11 +75,11 @@ app.post("/webhook", async (req, res) => {
     res.sendStatus(200);
 });
 
-// 🧪 test server
+// test
 app.get("/", (req, res) => {
-    res.send("Server running 🚀");
+    res.send("🍔 Food Order System Running");
 });
 
-// 🚀 start server (Render ใช้ port นี้)
+// run server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server started on port", PORT));
+app.listen(PORT, () => console.log("Server started"));

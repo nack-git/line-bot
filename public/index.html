@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Food Order</title>
+</head>
+
+<body>
+
+    <h2>🍔 สั่งอาหาร</h2>
+
+    <input id="item" placeholder="เช่น ข้าวผัด">
+    <input id="qty" type="number" placeholder="จำนวน">
+
+    <button onclick="order()">สั่งเลย</button>
+
+    <script>
+        async function order() {
+            const item = document.getElementById("item").value;
+            const qty = document.getElementById("qty").value;
+
+            await fetch("/order", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ item, qty })
+            });
+
+            alert("ส่งออเดอร์แล้ว");
+        }
+    </script>
+
+</body>
+
+</html>
