@@ -1,49 +1,60 @@
+require("dotenv").config();
+
 const express = require("express");
 const axios = require("axios");
 
 const app = express();
 app.use(express.json());
 
-// 🔑 ใส่ Channel Access Token ของคุณ
-const LINE_TOKEN = "p17PUfG/xDUVD/ieH7o7m+HioOr9vZr6Ooha4ggpXaeI4LMCWzX7fRRNmW88LfKm+As3i7aWdGUoDJ5dU0NA3b/8X02VP7HOFCqRFOtthvCXjuT8A9nuHaBTFnI4HryDD98vtEc42c1/T3Ipxgt6EAdB04t89/1O/w1cDnyilFU=";
+// 🔑 ใช้จาก Environment Variable
+const LINE_TOKEN = process.env.LINE_TOKEN;
 
-// 📲 ฟังก์ชันยิงข้อความเข้า LINE
+// 📤 ฟังก์ชันส่งข้อความเข้า LINE
 async function sendLine(userId, message) {
-    await axios.post(
-        "https://api.line.me/v2/bot/message/push",
-        {
-            to: userId,
-            messages: [
-                {
-                    type: "text",
-                    text: message
+    try {
+        await axios.post(
+            "https://api.line.me/v2/bot/message/push",
+            {
+                to: userId,
+                messages: [
+                    {
+                        type: "text",
+                        text: message
+                    }
+                ]
+            },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + LINE_TOKEN
                 }
-            ]
-        },
-        {
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + LINE_TOKEN
             }
-        }
-    );
+        );
+
+        console.log("✅ SEND SUCCESS");
+    } catch (err) {
+        console.log("❌ SEND ERROR:", err.response?.data || err.message);
+    }
 }
 
-// 🔥 webhook รับ event จาก LINE
+// 🔥 Webhook หลัก
 app.post("/webhook", async (req, res) => {
-    console.log("LINE EVENT:");
-    console.log(JSON.stringify(req.body, null, 2));
-
     const events = req.body.events;
 
-    if (events && events.length > 0) {
-        const event = events[0];
+    if (Array.isArray(events)) {
+        for (const event of events) {
 
-        if (event.source && event.source.userId) {
-            const userId = event.source.userId;
+            if (event.type === "message" && event.source?.userId) {
+                const userId = event.source.userId;
+                const text = event.message.text;
 
-            // 💬 ส่งข้อความกลับ
-            await sendLine(userId, "✅ มีออเดอร์เข้าแล้ว!");
+                console.log("📩 LINE EVENT:", text);
+
+                await sendLine(
+                    userId,
+                    "🛒 มีออเดอร์เข้า\nรายการ: " + text
+                );
+            }
         }
     }
 
@@ -52,9 +63,9 @@ app.post("/webhook", async (req, res) => {
 
 // 🧪 test server
 app.get("/", (req, res) => {
-    res.send("Server running");
+    res.send("Server running 🚀");
 });
 
-// 🚀 run server
+// 🚀 start server (Render ใช้ port นี้)
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server started"));
+app.listen(PORT, () => console.log("Server started on port", PORT));
